@@ -1,0 +1,14 @@
+{
+    "id": "Area51",
+    "area": { "type": "MultiPolygon",
+    "coordinates": [
+      [
+          [[11.3187, 44.4950], [11.3205, 44.4950], [11.3205, 44.4954], [11.3187, 44.4954],[11.3187, 44.4950]]
+      ]
+    ]
+    },
+    "begin": 1537945270000,
+    "end": 1537945310000,
+    "trafficLightsBroken": true,
+    "restriction": "passenger"
+}

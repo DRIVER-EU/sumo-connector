@@ -3,7 +3,7 @@ import unittest
 import sys
 import json
 import os
-sys.path += [".."]
+sys.path += [os.path.join(os.path.dirname(__file__), "..", "python-test-bed-adapter")]
 from test_bed_adapter.options.test_bed_options import TestBedOptions
 from test_bed_adapter import TestBedAdapter
 
@@ -20,9 +20,8 @@ class ProducerExample:
             # "schema_registry": 'http://driver-testbed.eu:3502',
             "kafka_host": '127.0.0.1:3501',
             "schema_registry": 'http://localhost:3502',
-            "fetch_all_versions": False,
-            "from_off_set": True,
-            "client_id": 'PYTHON TEST BED ADAPTER',
+            "reset_offset_on_start": True,
+            "client_id": 'Test SUMO Connector',
             "produce": ["sumo_SumoConfiguration", "sumo_AffectedArea"]}
 
         test_bed_options = TestBedOptions(options)
@@ -34,11 +33,13 @@ class ProducerExample:
 
         test_bed_adapter.initialize()
 
-        #We load a test message from file
+        # The current configuration expects the Time Service to start on 2018-09-26 09:00:00
+        # The simulation starts at 2018-09-26 09:01:00 and ends at 2018-09-26 09:02:00
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "acosta", "Configuration.json")
         message = {"messages":json.load(open(message_path))}
         test_bed_adapter.producer_managers["sumo_SumoConfiguration"].send_messages(message)
 
+        # The affected area is valid from 2018-09-26 09:01:10 until 2018-09-26 09:01:50
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "acosta", "AffectedArea.json")
         message = {"messages":json.load(open(message_path))}
         test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages(message)

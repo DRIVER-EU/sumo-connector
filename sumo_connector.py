@@ -4,6 +4,7 @@ import sys
 import queue
 import datetime
 import threading
+import uuid
 from argparse import ArgumentParser
 from optparse import OptionParser
 from collections import namedtuple
@@ -54,6 +55,7 @@ class SumoConnector:
         self._deltaT = None
         self._config = None
         self._affected = []
+        self._runningVehicles = {}
 
     def addToQueue(self, message):
         self._queue.put(message['decoded_value'][0])
@@ -86,6 +88,7 @@ class SumoConnector:
             traci.simulationStep()
             self._simTime += self._deltaT
             self.checkAffected()
+            self.writeSingleVehicleOutput()
 
     def handleAffectedArea(self, area):
         affectedTLSList = []
@@ -163,6 +166,28 @@ class SumoConnector:
                 # TODO reset lane permissions
 
 
+    def writeSingleVehicleOutput(self):
+        # TODO we should use subscriptions here
+        for vid in traci.simulation.getDepartedIDList():
+            self._runningVehicles[vid] = str(uuid.uuid1())
+        for vid in traci.simulation.getArrivedIDList():
+            del self._runningVehicles[vid]
+        for vid, uid in self._runningVehicles.items():
+            data = {"guid" : uid,
+                    "name" : "%s %s" % (vid, traci.vehicle.getTypeID(vid)),
+                    "owner": "sumo",
+                    "visibleForParticipant": True,
+                    "movable": True}
+            x, y, alt = traci.vehicle.getPosition3D(vid)
+            lon, lat = self._net.convertXY2LonLat(x, y)
+            data["location"] = { "latitude": lat, "longitude": lon, "altitude": alt }
+            angle = traci.vehicle.getAngle(vid)
+            slope = traci.vehicle.getSlope(vid)
+            data["orientation"] = { "yaw": angle, "pitch": slope, "roll": 0 }
+            data["velocity"] = { "yaw": angle, "pitch": slope, "magnitude": traci.vehicle.getSpeed(vid) }
+            self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages({"messages": data})
+
+
     def main(self):
         testbed_options = {
             "auto_register_schemas": True,
@@ -173,15 +198,16 @@ class SumoConnector:
             "schema_registry": 'http://localhost:3502',
             "reset_offset_on_start": True,
             "client_id": 'SUMO Connector',
-            "consume": ["sumo_SumoConfiguration", "sumo_AffectedArea", "system_timing"]}
+            "consume": ["sumo_SumoConfiguration", "sumo_AffectedArea", "system_timing"],
+            "produce": ["simulation_entity_item"]}
 
-        test_bed_adapter = TestBedAdapter(TestBedOptions(testbed_options))
-        test_bed_adapter.on_message += self.addToQueue
+        self._test_bed_adapter = TestBedAdapter(TestBedOptions(testbed_options))
+        self._test_bed_adapter.on_message += self.addToQueue
 
-        test_bed_adapter.initialize()
+        self._test_bed_adapter.initialize()
         threads = []
         for topic in testbed_options["consume"]:
-            threads.append(threading.Thread(target=test_bed_adapter.consumer_managers[topic].listen_messages))
+            threads.append(threading.Thread(target=self._test_bed_adapter.consumer_managers[topic].listen_messages))
             threads[-1].start()
         while True:
             message = self._queue.get()

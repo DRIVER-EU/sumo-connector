@@ -3,6 +3,8 @@ import unittest
 import sys
 import json
 import os
+import queue
+import threading
 sys.path += [os.path.join(os.path.dirname(__file__), "..", "python-test-bed-adapter")]
 from test_bed_adapter.options.test_bed_options import TestBedOptions
 from test_bed_adapter import TestBedAdapter
@@ -11,6 +13,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 class ProducerExample:
+    def __init__(self):
+        self._queue = queue.Queue()
+
+    def addToQueue(self, message):
+        self._queue.put(message['decoded_value'][0])
 
     def main(self):
         options = {
@@ -22,6 +29,7 @@ class ProducerExample:
             "schema_registry": 'http://localhost:3502',
             "reset_offset_on_start": True,
             "client_id": 'Test SUMO Connector',
+            "consume": ["simulation_entity_item"],
             "produce": ["sumo_SumoConfiguration", "sumo_AffectedArea"]}
 
         test_bed_options = TestBedOptions(options)
@@ -29,6 +37,7 @@ class ProducerExample:
 
         # This funcion will act as a handler. It only prints the message once it has been sent
         message_sent_handler = lambda message : logging.info("\n\n------\nmessage sent:\n------\n\n" + str(message))
+        test_bed_adapter.on_message += self.addToQueue
         test_bed_adapter.on_sent += message_sent_handler
 
         test_bed_adapter.initialize()
@@ -43,6 +52,14 @@ class ProducerExample:
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "acosta", "AffectedArea.json")
         message = {"messages":json.load(open(message_path))}
         test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages(message)
+
+        threads = []
+        for topic in options["consume"]:
+            threads.append(threading.Thread(target=test_bed_adapter.consumer_managers[topic].listen_messages))
+            threads[-1].start()
+        while True:
+            message = self._queue.get()
+            logging.info("\n\n-----\nReceived message\n-----\n\n" + str(message))
 
 if __name__ == '__main__':
     ProducerExample().main()

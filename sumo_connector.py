@@ -56,6 +56,7 @@ class SumoConnector:
         self._config = None
         self._affected = []
         self._runningVehicles = {}
+        self._resetRestriction = {}
 
     def addToQueue(self, message):
         self._queue.put(message['decoded_value'][0])
@@ -88,7 +89,7 @@ class SumoConnector:
             traci.simulationStep()
             self._simTime += self._deltaT
             self.checkAffected()
-            self.writeSingleVehicleOutput()
+            self.writeSingleVehicleOutput(self._config["singleVehicle"])
 
     def handleAffectedArea(self, area):
         affectedTLSList = []
@@ -108,8 +109,7 @@ class SumoConnector:
         result = list(reader._districtEdges.values())
         if result:
             affectedEdgeList = result[0]  # there is only one district
-        # TODO error polygon not found
-            
+        
         if area["trafficLightsBroken"]:
             affectedIntersections = set()
             for n in self._net.getNodes():
@@ -137,14 +137,16 @@ class SumoConnector:
                 # set the vehicle restriction on each edges
                 for edge in affected.edges:
                     for lane in edge.getLanes():
+                        # save the original restrictions
+                        self._resetRestriction[edge][lane.getID()] = traci.lane.getDisallowed(lane.getID())
                         if 'all' in affected.restriction:
                             traci.lane.setDisallowed(lane.getID(), [])
                         else:
                             traci.lane.setDisallowed(lane.getID(), affected.restriction)
 
                 # subscribe variables
+                # todo: wait for the new traci-function to get num_reroute, num _canNotReach and num_avgContained
                 for pObj in affected.polygons: # currently only consider one polygon
-                    # todo: wait for the new traci-function to get num_reroute, num _canNotReach and num_avgContained
                     traci.polygon.add(pObj.id, pObj.shape, (255, 0, 0), layer=100)
                     traci.polygon.subscribeContext(pObj.id, tc.CMD_GET_VEHICLE_VARIABLE, 10.,
                                                    [tc.VAR_VEHICLECLASS,
@@ -164,28 +166,33 @@ class SumoConnector:
                         traci.trafficlight.setProgram(tlsId, p)
                         break
                 # TODO reset lane permissions
+                for edge in affected.edges:
+                    for lane in edge.getLanes():
+                        traci.lane.setDisallowed(lane.getID(), self._resetRestriction[edge][lane.getID()])
 
-
-    def writeSingleVehicleOutput(self):
+    def writeSingleVehicleOutput(self, samplePeriod):
         # TODO we should use subscriptions here
+
         for vid in traci.simulation.getDepartedIDList():
+            traci.vehicle.subscribe(vid, [tc.VAR_TYPE, tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SLOPE, tc.VAR_SPEED])
             self._runningVehicles[vid] = str(uuid.uuid1())
-        for vid in traci.simulation.getArrivedIDList():
-            del self._runningVehicles[vid]
-        for vid, uid in self._runningVehicles.items():
-            data = {"guid" : uid,
-                    "name" : "%s %s" % (vid, traci.vehicle.getTypeID(vid)),
-                    "owner": "sumo",
-                    "visibleForParticipant": True,
-                    "movable": True}
-            x, y, alt = traci.vehicle.getPosition3D(vid)
-            lon, lat = self._net.convertXY2LonLat(x, y)
-            data["location"] = { "latitude": lat, "longitude": lon, "altitude": alt }
-            angle = traci.vehicle.getAngle(vid)
-            slope = traci.vehicle.getSlope(vid)
-            data["orientation"] = { "yaw": angle, "pitch": slope, "roll": 0 }
-            data["velocity"] = { "yaw": angle, "pitch": slope, "magnitude": traci.vehicle.getSpeed(vid) }
-            self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages({"messages": data})
+            
+        if self._simTime % samplePeriod == 0.:
+            resultMap = traci.vehicle.getSubscriptionResults(vid)
+            for vid, uid in self._runningVehicles.items():
+                data = {"guid" : uid,
+                        "name" : "%s %s" % (vid, resultMap[vid][tc.VAR_TYPE]),
+                        "owner": "sumo",
+                        "visibleForParticipant": True,
+                        "movable": True}
+                x, y, alt = resultMap[vid][tc.VAR_POSITION3D]
+                lon, lat = self._net.convertXY2LonLat(x, y)
+                data["location"] = { "latitude": lat, "longitude": lon, "altitude": alt }
+                angle = resultMap[vid][tc.VAR_ANGLE]
+                slope = resultMap[vid][tc.VAR_SLOPE]
+                data["orientation"] = { "yaw": angle, "pitch": slope, "roll": 0 }
+                data["velocity"] = { "yaw": angle, "pitch": slope, "magnitude": resultMap[vid][tc.VAR_SPEED] }
+                self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages({"messages": data})
 
 
     def main(self):
@@ -194,8 +201,8 @@ class SumoConnector:
             "schema_folder": 'data/schemas',
             # "kafka_host": 'driver-testbed.eu:3501',
             # "schema_registry": 'http://driver-testbed.eu:3502',
-            "kafka_host": '127.0.0.1:3501',
-            "schema_registry": 'http://localhost:3502',
+            "kafka_host": '129.247.218.121:3501',  #'127.0.0.1:3501',
+            "schema_registry": 'http://129.247.218.121:3502', #'http://localhost:3502',
             "reset_offset_on_start": True,
             "client_id": 'SUMO Connector',
             "consume": ["sumo_SumoConfiguration", "sumo_AffectedArea", "system_timing"],

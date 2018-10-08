@@ -178,20 +178,20 @@ class SumoConnector:
             self._runningVehicles[vid] = str(uuid.uuid1())
             
         if self._simTime % samplePeriod == 0.:
-            resultMap = traci.vehicle.getSubscriptionResults(vid)
-            for vid, uid in self._runningVehicles.items():
-                data = {"guid" : uid,
-                        "name" : "%s %s" % (vid, resultMap[vid][tc.VAR_TYPE]),
+            resultMap = traci.vehicle.getAllSubscriptionResults()
+            for vid, valMap in resultMap.items():
+                data = {"guid" : self._runningVehicles[vid],
+                        "name" : "%s %s" % (vid, valMap[tc.VAR_TYPE]),
                         "owner": "sumo",
                         "visibleForParticipant": True,
                         "movable": True}
-                x, y, alt = resultMap[vid][tc.VAR_POSITION3D]
+                x, y, alt = valMap[tc.VAR_POSITION3D]
                 lon, lat = self._net.convertXY2LonLat(x, y)
                 data["location"] = { "latitude": lat, "longitude": lon, "altitude": alt }
-                angle = resultMap[vid][tc.VAR_ANGLE]
-                slope = resultMap[vid][tc.VAR_SLOPE]
+                angle = valMap[tc.VAR_ANGLE]
+                slope = valMap[tc.VAR_SLOPE]
                 data["orientation"] = { "yaw": angle, "pitch": slope, "roll": 0 }
-                data["velocity"] = { "yaw": angle, "pitch": slope, "magnitude": resultMap[vid][tc.VAR_SPEED] }
+                data["velocity"] = { "yaw": angle, "pitch": slope, "magnitude": valMap[tc.VAR_SPEED] }
                 self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages({"messages": data})
 
 

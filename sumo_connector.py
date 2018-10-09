@@ -138,7 +138,7 @@ class SumoConnector:
                 for edge in affected.edges:
                     for lane in edge.getLanes():
                         # save the original restrictions
-                        self._resetRestriction[edge][lane.getID()] = traci.lane.getDisallowed(lane.getID())
+                        self._resetRestriction[lane.getID()] = traci.lane.getDisallowed(lane.getID())
                         if 'all' in affected.restriction:
                             traci.lane.setDisallowed(lane.getID(), [])
                         else:
@@ -168,7 +168,7 @@ class SumoConnector:
                 # TODO reset lane permissions
                 for edge in affected.edges:
                     for lane in edge.getLanes():
-                        traci.lane.setDisallowed(lane.getID(), self._resetRestriction[edge][lane.getID()])
+                        traci.lane.setDisallowed(lane.getID(), self._resetRestriction[lane.getID()])
 
     def writeSingleVehicleOutput(self, samplePeriod):
         # TODO we should use subscriptions here
@@ -203,7 +203,8 @@ class SumoConnector:
             # "schema_registry": 'http://driver-testbed.eu:3502',
             "kafka_host": '129.247.218.121:3501',  #'127.0.0.1:3501',
             "schema_registry": 'http://129.247.218.121:3502', #'http://localhost:3502',
-            "reset_offset_on_start": True,
+            #"reset_offset_on_start": True,
+            "offset_type": "EARLIEST",
             "client_id": 'SUMO Connector',
             "consume": ["sumo_SumoConfiguration", "sumo_AffectedArea", "system_timing"],
             "produce": ["simulation_entity_item"]}

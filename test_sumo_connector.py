@@ -27,7 +27,8 @@ class ProducerExample:
             # "schema_registry": 'http://driver-testbed.eu:3502',
             "kafka_host": '129.247.218.121:3501', #'127.0.0.1:3501',
             "schema_registry": 'http://129.247.218.121:3502', #'http://localhost:3502',
-            "reset_offset_on_start": True,
+            #"reset_offset_on_start": True,
+            "offset_type": "EARLIEST",
             "client_id": 'Test SUMO Connector',
             "consume": ["simulation_entity_item"],
             "produce": ["sumo_SumoConfiguration", "sumo_AffectedArea"]}
@@ -35,7 +36,7 @@ class ProducerExample:
         test_bed_options = TestBedOptions(options)
         test_bed_adapter = TestBedAdapter(test_bed_options)
 
-        # This funcion will act as a handler. It only prints the message once it has been sent
+        # This function will act as a handler. It only prints the message once it has been sent
         message_sent_handler = lambda message : logging.info("\n\n------\nmessage sent:\n------\n\n" + str(message))
         test_bed_adapter.on_message += self.addToQueue
         test_bed_adapter.on_sent += message_sent_handler

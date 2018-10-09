@@ -16,9 +16,7 @@ Before you use this connector on your computer/laptop, you need to
 # Scenario
 Adter cloning the sumo-connector you will find a directory called acosta, which is the example scenario. This scenario is a part of the City Bologna in Italy. All the related simulation data can be found under the directory acosta.
 - Description
-  A intersection is closed in this scenario. A The test-bed will inform
-
-- Output
-   The data (vehicle type, slope, speed, position and angle) for each single vehicle will be sent to the test-bed at each sample interval, defined in the Configuration.json under the directory acosta.
+    An intersection is closed in this scenario. The test-bed will first send the messages, defined in the respective Configuration.json, to start the simulation. After that, it will send the messages about the affected area, defined in the AffectedArea.json. Then the affected roads and the broken traffic lights will be identifed by SUMO. When the simulation time corresponds to the begin time of the event, th affected roads and traffic lights will be shut down. When the event is over, the closed roads and traffic lights will be reset.
+    During the simulation, the data (vehicle type, slope, speed, position and angle) for each vehicle will be sent to the test-bed at each sample interval, defined in the Configuration.json.
 # Execution
-After the installation, you need to execute the sumo_connector.py and test_sumo_connector.py as well as to start the time service at the test-bed, which you set up.
+After the installation, you need to execute the sumo_connector.py and test_sumo_connector.py as well as to start the time service at the test-bed, which you set up. Before you start the scripts, you need to change the information about the host and the schema registry in both scripts. 

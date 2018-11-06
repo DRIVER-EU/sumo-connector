@@ -176,6 +176,7 @@ class SumoConnector:
         for vid in traci.simulation.getDepartedIDList():
             traci.vehicle.subscribe(vid, [tc.VAR_TYPE, tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SLOPE, tc.VAR_SPEED])
             self._runningVehicles[vid] = str(uuid.uuid1())
+<<<<<<< HEAD
             
         if self._simTime % samplePeriod == 0.:
             resultMap = traci.vehicle.getAllSubscriptionResults()
@@ -193,6 +194,24 @@ class SumoConnector:
                 data["orientation"] = { "yaw": angle, "pitch": slope, "roll": 0 }
                 data["velocity"] = { "yaw": angle, "pitch": slope, "magnitude": valMap[tc.VAR_SPEED] }
                 self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages({"messages": data})
+=======
+        for vid in traci.simulation.getArrivedIDList():
+            del self._runningVehicles[vid]
+        for vid, uid in self._runningVehicles.items():
+            data = {"guid" : uid,
+                    "name" : "%s %s" % (vid, traci.vehicle.getTypeID(vid)),
+                    "owner": "sumo",
+                    "visibleForParticipant": True,
+                    "movable": True}
+            x, y, alt = traci.vehicle.getPosition3D(vid)
+            lon, lat = self._net.convertXY2LonLat(x, y)
+            data["location"] = { "latitude": lat, "longitude": lon, "altitude": alt }
+            angle = traci.vehicle.getAngle(vid)
+            slope = traci.vehicle.getSlope(vid)
+            data["orientation"] = { "yaw": angle, "pitch": slope, "roll": 0 }
+            data["velocity"] = { "yaw": angle, "pitch": slope, "magnitude": traci.vehicle.getSpeed(vid) }
+            self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages([data])
+>>>>>>> adapting to new message interface
 
 
     def main(self):

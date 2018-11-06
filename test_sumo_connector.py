@@ -46,13 +46,11 @@ class ProducerExample:
         # The current configuration expects the Time Service to start on 2018-09-26 09:00:00
         # The simulation starts at 2018-09-26 09:01:00 and ends at 2018-09-26 09:02:00
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "acosta", "Configuration.json")
-        message = {"messages":json.load(open(message_path))}
-        test_bed_adapter.producer_managers["sumo_SumoConfiguration"].send_messages(message)
+        test_bed_adapter.producer_managers["sumo_SumoConfiguration"].send_messages([json.load(open(message_path))])
 
         # The affected area is valid from 2018-09-26 09:01:10 until 2018-09-26 09:01:50
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "acosta", "AffectedArea.json")
-        message = {"messages":json.load(open(message_path))}
-        test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages(message)
+        test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages([json.load(open(message_path))])
 
         threads = []
         for topic in options["consume"]:

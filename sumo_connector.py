@@ -192,17 +192,15 @@ class SumoConnector:
                 slope = valMap[tc.VAR_SLOPE]
                 data["orientation"] = { "yaw": angle, "pitch": slope, "roll": 0 }
                 data["velocity"] = { "yaw": angle, "pitch": slope, "magnitude": valMap[tc.VAR_SPEED] }
-                self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages({"messages": data})
+                self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages([data])
 
 
-    def main(self):
+    def main(self, host):
         testbed_options = {
             "auto_register_schemas": True,
             "schema_folder": 'data/schemas',
-            # "kafka_host": 'driver-testbed.eu:3501',
-            # "schema_registry": 'http://driver-testbed.eu:3502',
-            "kafka_host": '129.247.218.121:3501',  #'127.0.0.1:3501',
-            "schema_registry": 'http://129.247.218.121:3502', #'http://localhost:3502',
+            "kafka_host": host + ':3501',
+            "schema_registry": 'http://%s:3502' % host,
             #"reset_offset_on_start": True,
             "offset_type": "EARLIEST",
             "client_id": 'SUMO Connector',
@@ -231,4 +229,7 @@ class SumoConnector:
 
 
 if __name__ == '__main__':
-    SumoConnector().main()
+    host = "localhost" # other possible values: 'driver-testbed.eu', '129.247.218.121'
+    if len(sys.argv) > 1:
+        host = sys.argv[1]
+    SumoConnector().main(host)

@@ -19,14 +19,12 @@ class ProducerExample:
     def addToQueue(self, message):
         self._queue.put(message['decoded_value'][0])
 
-    def main(self):
+    def main(self, host):
         options = {
             "auto_register_schemas": True,
             "schema_folder": 'data/schemas',
-            # "kafka_host": 'driver-testbed.eu:3501',
-            # "schema_registry": 'http://driver-testbed.eu:3502',
-            "kafka_host": '129.247.218.121:3501', #'127.0.0.1:3501',
-            "schema_registry": 'http://129.247.218.121:3502', #'http://localhost:3502',
+            "kafka_host": host + ':3501',
+            "schema_registry": 'http://%s:3502' % host,
             #"reset_offset_on_start": True,
             "offset_type": "EARLIEST",
             "client_id": 'Test SUMO Connector',
@@ -61,4 +59,7 @@ class ProducerExample:
             logging.info("\n\n-----\nReceived message\n-----\n\n" + str(message))
 
 if __name__ == '__main__':
-    ProducerExample().main()
+    host = "localhost" # other possible values: 'driver-testbed.eu', '129.247.218.121'
+    if len(sys.argv) > 1:
+        host = sys.argv[1]
+    ProducerExample().main(host)

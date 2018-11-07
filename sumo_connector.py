@@ -140,7 +140,7 @@ class SumoConnector:
                         # save the original restrictions
                         self._resetRestriction[lane.getID()] = traci.lane.getDisallowed(lane.getID())
                         if 'all' in affected.restriction:
-                            traci.lane.setDisallowed(lane.getID(), [])
+                            traci.lane.setAllowed(lane.getID(), ["authority"])
                         else:
                             traci.lane.setDisallowed(lane.getID(), affected.restriction)
 
@@ -165,7 +165,6 @@ class SumoConnector:
                     for p in tlsObj.getPrograms().keys():  # only consider the first program
                         traci.trafficlight.setProgram(tlsId, p)
                         break
-                # TODO reset lane permissions
                 for edge in affected.edges:
                     for lane in edge.getLanes():
                         traci.lane.setDisallowed(lane.getID(), self._resetRestriction[lane.getID()])

@@ -10,5 +10,5 @@
     "begin": 1537945270000,
     "end": 1537945310000,
     "trafficLightsBroken": true,
-    "restriction": "passenger"
+    "restriction": "all"
 }

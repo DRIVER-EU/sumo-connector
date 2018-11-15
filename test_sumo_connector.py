@@ -19,7 +19,7 @@ class ProducerExample:
     def addToQueue(self, message):
         self._queue.put(message['decoded_value'][0])
 
-    def main(self, host):
+    def main(self, host, scenario):
         options = {
             "auto_register_schemas": True,
             "schema_folder": 'data/schemas',
@@ -43,11 +43,11 @@ class ProducerExample:
 
         # The current configuration expects the Time Service to start on 2018-09-26 09:00:00
         # The simulation starts at 2018-09-26 09:01:00 and ends at 2018-09-26 09:02:00
-        message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "acosta", "Configuration.json")
+        message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "Configuration.json")
         test_bed_adapter.producer_managers["sumo_SumoConfiguration"].send_messages([json.load(open(message_path))])
 
         # The affected area is valid from 2018-09-26 09:01:10 until 2018-09-26 09:01:50
-        message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "acosta", "AffectedArea.json")
+        message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "AffectedArea.json")
         test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages([json.load(open(message_path))])
 
         threads = []
@@ -60,6 +60,8 @@ class ProducerExample:
 
 if __name__ == '__main__':
     host = "localhost" # other possible values: 'driver-testbed.eu', '129.247.218.121'
+    scenario = "acosta" # the name of the scenario directory; the other existing example scenario: 'WorldForumTheHague' or the self-defined scenario
     if len(sys.argv) > 1:
         host = sys.argv[1]
-    ProducerExample().main(host)
+        scenario = sys.argv[2]
+    ProducerExample().main(host, scenario)

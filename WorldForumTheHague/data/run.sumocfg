@@ -7,16 +7,19 @@
 
     <input>
         <net-file value="osm.net.xml"/>
-        <route-files value="osm.passenger.trips.xml,osm.bicycle.trips.xml,osm.tram.trips.xml,osm.bus.trips.xml,osm.pedestrian.rou.xml"/>
+        <route-files value="osm.passenger.trips.xml,osm.bicycle.trips.xml,osm.tram.trips.xml,osm.bus.trips.xml,osm.pedestrian.rou.xml,flow.trips.xml"/>
         <additional-files value="osm.poly.xml"/>
     </input>
 
     <processing>
         <ignore-route-errors value="true"/>
+        <time-to-teleport value="-1"/>
     </processing>
 
     <routing>
-        <device.rerouting.adaptation-steps value="180"/>
+        <device.rerouting.adaptation-steps value="1"/>
+        <device.rerouting.probability values="1.0"/>
+        <device.rerouting.adaptation-interval value="10"/>
     </routing>
 
     <report>

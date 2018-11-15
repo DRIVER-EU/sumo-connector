@@ -1,0 +1,14 @@
+{
+    "id": "Area20",
+    "area": { "type": "MultiPolygon",
+    "coordinates": [
+      [
+          [[4.2768, 52.0903], [4.2768, 52.0920], [4.2803, 52.0920], [4.2803, 52.0903],[4.2768, 52.0903]]
+      ]
+    ]
+    },
+    "begin": 1537945270000,
+    "end": 1537945310000,
+    "trafficLightsBroken": true,
+    "restriction": "all"
+}

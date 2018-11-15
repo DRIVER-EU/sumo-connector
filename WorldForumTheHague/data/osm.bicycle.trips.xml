@@ -185,7 +185,6 @@
     <trip id="bike207" depart="1996.98" departLane="best" from="-7494133" to="-150115772#1" type="bike_bicycle"/>
     <trip id="bike208" depart="2006.63" departLane="best" from="-7496855#2" to="308873078#4" type="bike_bicycle"/>
     <trip id="bike209" depart="2016.27" departLane="best" from="7496849" to="-270143188#0" type="bike_bicycle"/>
-    <trip id="bike210" depart="2025.92" departLane="best" from="206556874#1" to="65756423#2" type="bike_bicycle"/>
     <trip id="bike211" depart="2035.57" departLane="best" from="-7494129#5" to="7494034" type="bike_bicycle"/>
     <trip id="bike212" depart="2045.21" departLane="best" from="308934112#0" to="-7497077" type="bike_bicycle"/>
     <trip id="bike213" depart="2054.86" departLane="best" from="7494015" to="-121157898#0" type="bike_bicycle"/>

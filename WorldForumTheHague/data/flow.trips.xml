@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- generated on 2018-11-14 15:51:00.081000 by $Id$ via randomTrips.py
+  options: 
+-->
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vType id="veh_passenger2" vClass="passenger">
+    </vType>
+    <flow id="SNE" type="veh_passenger2" from="7496921#0" to="139728278#2" begin="0" end="3600" number="100" color="red"/>
+</routes>

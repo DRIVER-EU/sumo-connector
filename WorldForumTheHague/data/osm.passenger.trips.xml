@@ -161,7 +161,6 @@
     <trip id="veh207" depart="1931.75" departLane="best" from="7494127#3" to="-150115772#3" type="veh_passenger"/>
     <trip id="veh208" depart="1941.08" departLane="best" from="328674800" to="7494018#0" type="veh_passenger"/>
     <trip id="veh211" depart="1969.08" departLane="best" from="104054486#1" to="206556875#3" type="veh_passenger"/>
-    <trip id="veh213" depart="1987.74" departLane="best" from="139728280#0" to="-7494021#5" type="veh_passenger"/>
     <trip id="veh215" depart="2006.41" departLane="best" from="98531331#3" to="218541220#1" type="veh_passenger"/>
     <trip id="veh216" depart="2015.74" departLane="best" from="7494143#1" to="7496234#5" type="veh_passenger"/>
     <trip id="veh219" depart="2043.74" departLane="best" from="-7494129#3" to="7494143#0" type="veh_passenger"/>

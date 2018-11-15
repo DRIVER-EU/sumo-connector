@@ -34,8 +34,8 @@ def get_options():
                      default=False, help="write SUMO's static outputs in JSON format")
     argParser.add_argument("--nogui", action="store_true",
                          default=False, help="run the command-line version of sumo")
-    argParser.add_argument("--duration-statistics", action="store_true",          # ?: how to send this to the server?
-                         default=False, help="enable statistics on vehicle trips")
+    argParser.add_argument("-s", "--server",
+                    default="localhost", help="define the server; other possible values: 'driver-testbed.eu', '129.247.218.121'")
     argParser.add_argument("-v", "--verbose", action="store_true", dest="verbose",
                      default=False, help="tell me what you are doing")
     options = argParser.parse_args()
@@ -194,12 +194,12 @@ class SumoConnector:
                 self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages([data])
 
 
-    def main(self, host):
+    def main(self):
         testbed_options = {
             "auto_register_schemas": True,
             "schema_folder": 'data/schemas',
-            "kafka_host": host + ':3501',
-            "schema_registry": 'http://%s:3502' % host,
+            "kafka_host": self._options.server + ':3501',
+            "schema_registry": 'http://%s:3502' % self._options.server,
             #"reset_offset_on_start": True,
             "offset_type": "EARLIEST",
             "client_id": 'SUMO Connector',
@@ -228,7 +228,4 @@ class SumoConnector:
 
 
 if __name__ == '__main__':
-    host = "localhost" # other possible values: 'driver-testbed.eu', '129.247.218.121'
-    if len(sys.argv) > 1:
-        host = sys.argv[1]
-    SumoConnector().main(host)
+    SumoConnector().main()

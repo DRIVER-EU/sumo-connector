@@ -1,0 +1,24 @@
+@startuml
+TimeService -> SUMO: Time
+TimeService -> XVR: Time
+TimeService -> SE-STAR: Time
+SUMO -> Gateway (something like scenario manager): Heartbeat (repeatedly)
+XVR -> Gateway (something like scenario manager): Heartbeat (repeatedly)
+SE-STAR -> Gateway (something like scenario manager): Heartbeat (repeatedly)
+SUMO <- Gateway (something like scenario manager) (something like scenario manager): Configuration (initializes simulation) 
+TimeService -> SUMO: Time (simulation start time -> starts simulation)
+TimeService -> XVR: Time (simulation start time -> starts simulation)
+TimeService -> SE-STAR: Time (simulation start time -> starts simulation)
+XVR <- Gateway (something like scenario manager): incident configuration (start,end) (which avro-file?)
+SE-STAR <- Gateway (something like scenario manager): incident configuration (start,end) (which avro-file?)
+SUMO <- Gateway (something like scenario manager): AffectedArea
+TimeService -> SE-STAR/XVR: Time (the updating step needs to be defined.)
+SE-STAR -> XVR: pedestrians' positions at the main railway station
+XVR -> SE-STAR: obstacles at the main railway station(?)
+XVR RM -> SUMO: inject request (route search for a rescue vehicle between the appointed locations) (simulation_request_unittransport-value.avsc)
+SUMO -> XVR RM: route edges for the injected vehicle (geo-line in geojson format)
+TimeService -> SUMO: Time (the updating step can be adapted according to the XVR-request.)
+SUMO -> XVR RM: positions of the injected vehicle (repeatedly until the vehicle reached its destination)
+TimeService -> SUMO: Time (interval end of affected traffic interval)
+TimeService -> SUMO: Time (simulation end time -> ends simulation)
+@enduml

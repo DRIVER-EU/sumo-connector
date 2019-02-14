@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 02/13/19 14:15:00 by Eclipse SUMO duarouter Version v1_1_0+0666-d03de0290d
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/duarouterConfiguration.xsd">
+
+    <input>
+        <net-file value="D:\Wang\sumo_git\tools\2019-02-13-14-13-18\osm.net.xml"/>
+        <route-files value="D:\Wang\sumo_git\tools\2019-02-13-14-13-18\osm.rail.trips.xml"/>
+    </input>
+
+    <output>
+        <output-file value="D:\Wang\sumo_git\tools\2019-02-13-14-13-18\osm.rail.trips.xml.tmp"/>
+        <write-trips value="true"/>
+    </output>
+
+    <time>
+        <begin value="0"/>
+        <end value="3600.0"/>
+    </time>
+
+    <report>
+        <no-warnings value="true"/>
+        <ignore-errors value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+</configuration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vType id="rail_rail" vClass="rail"/>
+    <trip id="rail60" type="rail_rail" depart="3431.58" departLane="best" departSpeed="max" from="449429209" to="449445812"/>
+</routes>

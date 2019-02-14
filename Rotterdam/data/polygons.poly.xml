@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 02/13/19 15:43:54 by Eclipse SUMO netedit Version v1_1_0+0666-d03de0290d
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="D:\Wang\sumo_git\tools\2019-02-13-14-13-18\osm.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="D:\Wang\sumo_git\tools\2019-02-13-14-13-18\osm.net.xml"/>
+        <output.street-names value="true"/>
+    </output>
+
+    <processing>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-internal-links value="false"/>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.5"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="true"/>
+    </pedestrian>
+
+    <visualisation>
+        <registry-viewport value="true"/>
+    </visualisation>
+
+</configuration>
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <poly id="poly_0_analysisArea" color="0,221,255" fill="1" layer="-10.00" geo="1" shape="4.457016,51.929025 4.489975,51.929025 4.489975,51.908590 4.457016,51.908590 4.457016,51.929025"/>
+    <poly id="poly_1_closedArea" color="red" fill="1" layer="-5.00" geo="1" shape="4.463198,51.923539 4.465380,51.923782 4.466792,51.924045 4.471109,51.924943 4.473170,51.925197 4.473898,51.925748 4.476155,51.925972 4.477029,51.923618 4.463975,51.920990 4.463167,51.923530 4.463198,51.923539"/>
+    <poi id="bbox_0" color="grey" layer="202.00" lon="4.457016" lat="51.908590"/>
+    <poi id="bbox_1" color="grey" layer="202.00" lon="4.489975" lat="51.908590"/>
+    <poi id="bbox_2" color="grey" layer="202.00" lon="4.457016" lat="51.929025"/>
+    <poi id="bbox_3" color="grey" layer="202.00" lon="4.489975" lat="51.929025"/>
+</additional>

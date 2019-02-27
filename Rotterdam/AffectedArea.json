@@ -1,0 +1,14 @@
+{
+    "id": "poly_1_closedArea",
+    "area": { "type": "MultiPolygon",
+    "coordinates": [
+      [
+          [[4.457016, 51.908590], [4.489975, 51.908590], [4.457016, 51.929025], [4.489975, 51.929025],[4.457016, 51.908590]]
+      ]
+    ]
+    },
+    "begin": 1537945270000,
+    "end": 1537945310000,
+    "trafficLightsBroken": true,
+    "restriction": "all"
+}

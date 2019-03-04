@@ -1,31 +1,30 @@
 @startuml
-participant Gateway order 0
-participant TimeService order 10
-participant XVR order 20
-participant "XVR RM" order 30
-participant SUMO order 40
-participant "SE-STAR" order 50
-TimeService -> SUMO: Time
-TimeService -> XVR: Time
-TimeService -> "SE-STAR": Time
-SUMO -> Gateway: Heartbeat (repeatedly)
-XVR -> Gateway: Heartbeat (repeatedly)
-"SE-STAR" -> Gateway: Heartbeat (repeatedly)
-Gateway -> SUMO: Configuration (initializes simulation) 
-TimeService -> SUMO: Time (simulation start time -> starts simulation)
-TimeService -> XVR: Time (simulation start time -> starts simulation)
-TimeService -> "SE-STAR": Time (simulation start time -> starts simulation)
-Gateway -> XVR: incident configuration (start,end) (which avro-file?)
-Gateway -> "SE-STAR": incident configuration (start,end) (which avro-file?)
-Gateway -> SUMO: AffectedArea
-TimeService -> "SE-STAR": Time (the updating step needs to be defined.)
-TimeService -> XVR: Time (the updating step needs to be defined.)
-"SE-STAR" -> XVR: pedestrians' positions at the main railway station
-XVR -> "SE-STAR": obstacles at the main railway station(?)
+participant "Trial Manager Tool" order 0
+participant "XVR OS" order 10
+participant "XVR RM" order 20
+participant SUMO order 30
+participant "SE-STAR" order 40
+"Trial Manager Tool" -> SUMO: Time
+"Trial Manager Tool" -> "XVR OS": Time
+"Trial Manager Tool" -> "SE-STAR": Time
+"XVR OS" -> "XVR RM": Time
+SUMO -> "Trial Manager Tool": Heartbeat (repeatedly)
+"XVR OS" -> "Trial Manager Tool": Heartbeat (repeatedly)
+"SE-STAR" -> "Trial Manager Tool": Heartbeat (repeatedly)
+"Trial Manager Tool" -> SUMO: Configuration (initializes simulation) 
+"Trial Manager Tool" -> SUMO: Time (simulation start time -> starts simulation)
+"Trial Manager Tool" -> "XVR OS": Time (simulation start time -> starts simulation)
+"XVR OS" -> "XVR RM" : Time (simulation start time -> starts simulation)
+"Trial Manager Tool" -> "SE-STAR": Time (simulation start time -> starts simulation)
+"Trial Manager Tool" -> "XVR OS": incident configuration (start,end)
+"Trial Manager Tool" -> "SE-STAR": incident configuration (start,end)
+"Trial Manager Tool" -> SUMO: affected area and road use restriction
+"Trial Manager Tool" -> "SE-STAR": Time (the updating step needs to be defined.)
+"Trial Manager Tool" -> "XVR OS": Time (the updating step needs to be defined.)
+"SE-STAR" -> "XVR OS": pedestrians' positions at the main railway station (repeatedly until all pedestrians are out of the investigation area)
 "XVR RM" -> SUMO: inject request\n(route search for a rescue vehicle\nbetween the appointed locations)\n(simulation_request_unittransport)
-SUMO -> "XVR RM": route edges for the injected vehicle\n(geo-line in geojson format)
-TimeService -> SUMO: Time (the updating step can be adapted according to the XVR-request.)
+"Trial Manager Tool" -> SUMO: Time (the updating step can be adapted according to the "XVR RM"-request.)
 SUMO -> "XVR RM": positions of the injected vehicle\n(repeatedly until the vehicle reached its destination)
-TimeService -> SUMO: Time (interval end of affected traffic interval)
-TimeService -> SUMO: Time (simulation end time -> ends simulation)
+"Trial Manager Tool" -> SUMO: Time (interval end of affected traffic interval)
+"Trial Manager Tool" -> SUMO: Time (simulation end time -> ends simulation)
 @enduml

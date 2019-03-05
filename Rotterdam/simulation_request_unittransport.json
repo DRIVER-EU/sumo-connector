@@ -1,0 +1,10 @@
+{
+    "guid": "vehicle1_route",
+    "owner": "anyone",
+    "unit": "vehicle1",
+    "destination": "somewhere",
+    "route": [
+      { "latitude": 51.9236, "longitude": 4.4802, "altitude": 0 },
+      { "latitude": 51.9105, "longitude": 4.4668, "altitude": 0 }
+    ]
+}

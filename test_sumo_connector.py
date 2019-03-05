@@ -25,11 +25,11 @@ class ProducerExample:
             "schema_folder": 'data/schemas',
             "kafka_host": host + ':3501',
             "schema_registry": 'http://%s:3502' % host,
-            #"reset_offset_on_start": True,
-            "offset_type": "EARLIEST",
+            "reset_offset_on_start": True,
+            "offset_type": "LATEST",
             "client_id": 'Test SUMO Connector',
             "consume": ["simulation_entity_item"],
-            "produce": ["sumo_SumoConfiguration", "sumo_AffectedArea"]}
+            "produce": ["sumo_SumoConfiguration", "sumo_AffectedArea", "simulation_request_unittransport"]}
 
         test_bed_options = TestBedOptions(options)
         test_bed_adapter = TestBedAdapter(test_bed_options)
@@ -49,6 +49,9 @@ class ProducerExample:
         # The affected area is valid from 2018-09-26 09:01:10 until 2018-09-26 09:01:50
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "AffectedArea.json")
         test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages([json.load(open(message_path))])
+
+        message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "simulation_request_unittransport.json")
+        test_bed_adapter.producer_managers["simulation_request_unittransport"].send_messages([json.load(open(message_path))])
 
         threads = []
         for topic in options["consume"]:

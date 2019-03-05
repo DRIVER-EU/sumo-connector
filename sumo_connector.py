@@ -175,7 +175,7 @@ class SumoConnector:
         for vid in traci.simulation.getDepartedIDList():
             traci.vehicle.subscribe(vid, [tc.VAR_TYPE, tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SLOPE, tc.VAR_SPEED])
             self._runningVehicles[vid] = str(uuid.uuid1())
-            
+
         if self._simTime % samplePeriod == 0.:
             resultMap = traci.vehicle.getAllSubscriptionResults()
             for vid, valMap in resultMap.items():
@@ -193,6 +193,12 @@ class SumoConnector:
                 data["velocity"] = { "yaw": angle, "pitch": slope, "magnitude": valMap[tc.VAR_SPEED] }
                 self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages([data])
 
+    def handleRoutingRequest(self, routing):
+        guid = routing["guid"]
+        startLat = routing["route"][0]["latitude"]
+        startLon = routing["route"][0]["longitude"]
+        endLat = routing["route"][1]["latitude"]
+        endLon = routing["route"][1]["longitude"]
 
     def main(self):
         testbed_options = {
@@ -200,10 +206,10 @@ class SumoConnector:
             "schema_folder": 'data/schemas',
             "kafka_host": self._options.server + ':3501',
             "schema_registry": 'http://%s:3502' % self._options.server,
-            #"reset_offset_on_start": True,
-            "offset_type": "EARLIEST",
+            "reset_offset_on_start": True,
+            "offset_type": "LATEST",
             "client_id": 'SUMO Connector',
-            "consume": ["sumo_SumoConfiguration", "sumo_AffectedArea", "system_timing"],
+            "consume": ["sumo_SumoConfiguration", "sumo_AffectedArea", "system_timing", "simulation_request_unittransport"],
             "produce": ["simulation_entity_item"]}
 
         self._test_bed_adapter = TestBedAdapter(TestBedOptions(testbed_options))
@@ -223,6 +229,8 @@ class SumoConnector:
                 self.handleTime(message)
             elif "restriction" in message:
                 self.handleAffectedArea(message)
+            elif "route" in message:
+                self.handleRoutingRequest(message)
 
 
 

@@ -90,6 +90,9 @@ class SumoConnector:
             self._simTime += self._deltaT
             self.checkAffected()
             self.writeSingleVehicleOutput(self._config["singleVehicle"])
+            resultMap = traci.vehicle.getAllSubscriptionResults()
+            for vid, valMap in resultMap.items():
+                self.sendItemData(vid, vid, valMap)
 
     def handleAffectedArea(self, area):
         affectedTLSList = []
@@ -133,7 +136,6 @@ class SumoConnector:
                 # switch off the affected traffic lights
                 for tlsId in affected.tls:
                     traci.trafficlight.setProgram(tlsId, "off")
-                    
                 # set the vehicle restriction on each edges
                 for edge in affected.edges:
                     for lane in edge.getLanes():
@@ -143,7 +145,6 @@ class SumoConnector:
                             traci.lane.setAllowed(lane.getID(), ["authority"])
                         else:
                             traci.lane.setDisallowed(lane.getID(), affected.restriction)
-
                 # subscribe variables
                 # todo: wait for the new traci-function to get num_reroute, num _canNotReach and num_avgContained
                 for pObj in affected.polygons: # currently only consider one polygon
@@ -155,7 +156,6 @@ class SumoConnector:
 #                                                    tc.VAR_REROUTE,             # to be built
 #                                                    tc.VAR_CAN_NOT_REACH,       # to be built
 #                                                    tc.VAR_AVERAGE_CONTAINED])  # to be built   ? check hoe to compute
-                                                
                     # need to recheck whether all retrieved vehicles are really in the polygon (or only in the defined bounding box)
 
             # reset the TLS programs
@@ -169,36 +169,40 @@ class SumoConnector:
                     for lane in edge.getLanes():
                         traci.lane.setDisallowed(lane.getID(), self._resetRestriction[lane.getID()])
 
-    def writeSingleVehicleOutput(self, samplePeriod):
-        # TODO we should use subscriptions here
+    def sendItemData(self, guid, vid, valMap):
+        data = {"guid" : guid,
+                "name" : "%s %s" % (vid, valMap[tc.VAR_TYPE]),
+                "owner": "sumo",
+                "visibleForParticipant": True,
+                "movable": True}
+        x, y, alt = valMap[tc.VAR_POSITION3D]
+        lon, lat = self._net.convertXY2LonLat(x, y)
+        data["location"] = { "latitude": lat, "longitude": lon, "altitude": alt }
+        angle = valMap[tc.VAR_ANGLE]
+        slope = valMap[tc.VAR_SLOPE]
+        data["orientation"] = { "yaw": angle, "pitch": slope, "roll": 0 }
+        data["velocity"] = { "yaw": angle, "pitch": slope, "magnitude": valMap[tc.VAR_SPEED] }
+        self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages([data])
 
+    def writeSingleVehicleOutput(self, samplePeriod):
+        if samplePeriod <= 0:
+            return
         for vid in traci.simulation.getDepartedIDList():
             traci.vehicle.subscribe(vid, [tc.VAR_TYPE, tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SLOPE, tc.VAR_SPEED])
             self._runningVehicles[vid] = str(uuid.uuid1())
-
         if self._simTime % samplePeriod == 0.:
             resultMap = traci.vehicle.getAllSubscriptionResults()
             for vid, valMap in resultMap.items():
-                data = {"guid" : self._runningVehicles[vid],
-                        "name" : "%s %s" % (vid, valMap[tc.VAR_TYPE]),
-                        "owner": "sumo",
-                        "visibleForParticipant": True,
-                        "movable": True}
-                x, y, alt = valMap[tc.VAR_POSITION3D]
-                lon, lat = self._net.convertXY2LonLat(x, y)
-                data["location"] = { "latitude": lat, "longitude": lon, "altitude": alt }
-                angle = valMap[tc.VAR_ANGLE]
-                slope = valMap[tc.VAR_SLOPE]
-                data["orientation"] = { "yaw": angle, "pitch": slope, "roll": 0 }
-                data["velocity"] = { "yaw": angle, "pitch": slope, "magnitude": valMap[tc.VAR_SPEED] }
-                self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages([data])
+                self.sendItemData(self._runningVehicles[vid], vid, valMap)
 
     def handleRoutingRequest(self, routing):
         guid = routing["guid"]
-        startLat = routing["route"][0]["latitude"]
-        startLon = routing["route"][0]["longitude"]
-        endLat = routing["route"][1]["latitude"]
-        endLon = routing["route"][1]["longitude"]
+        startEdge, startPos, startLane = s = traci.simulation.convertRoad(routing["route"][0]["longitude"], routing["route"][0]["latitude"], True)
+        endEdge, endPos, endLane = e = traci.simulation.convertRoad(routing["route"][1]["longitude"], routing["route"][1]["latitude"], True)
+        print("routing from", s, "to",  e)
+        traci.route.add(guid, (startEdge, endEdge))
+        traci.vehicle.add(guid, guid, "ignoring", departPos=str(startPos), arrivalPos=str(endPos))#, departLane=str(startLane), arrivalLane=str(endLane))
+        traci.vehicle.subscribe(guid, [tc.VAR_TYPE, tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SLOPE, tc.VAR_SPEED])
 
     def main(self):
         testbed_options = {

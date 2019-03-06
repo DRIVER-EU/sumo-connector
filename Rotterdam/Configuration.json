@@ -3,6 +3,6 @@
     "begin": 1537945260000,
     "end": 1537945320000,
     "aggregation": 3600000,
-    "singleVehicle":30000,
-    "affectedTraffic":90000
+    "singleVehicle": -1,
+    "affectedTraffic": 90000
 }

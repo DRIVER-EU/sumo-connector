@@ -49,7 +49,6 @@
     <trip id="veh38" type="veh_passenger" depart="33.38" departLane="best" from="666374662" to="7525925#0"/>
     <trip id="veh39" type="veh_passenger" depart="34.26" departLane="best" from="420011476#2" to="-7526800"/>
     <trip id="veh41" type="veh_passenger" depart="36.02" departLane="best" from="-7514123#2" to="-447026598#0"/>
-    <trip id="veh42" type="veh_passenger" depart="36.89" departLane="best" departSpeed="max" from="-7515336" to="7514944"/>
     <trip id="veh44" type="veh_passenger" depart="38.65" departLane="best" departSpeed="max" from="-527657594" to="397497469#1"/>
     <trip id="veh51" type="veh_passenger" depart="44.80" departLane="best" from="48377503#1" to="7526852#0"/>
     <trip id="veh52" type="veh_passenger" depart="45.68" departLane="best" from="7525822#1" to="142153166"/>

@@ -20,12 +20,12 @@ class ProducerExample:
     def addToQueue(self, message):
         self._queue.put(message['decoded_value'][0])
 
-    def main(self, host, scenario, log=None):
+    def main(self, host, port, scenario, log=None):
         options = {
             "auto_register_schemas": True,
             "schema_folder": 'data/schemas',
-            "kafka_host": host + ':3501',
-            "schema_registry": 'http://%s:3502' % host,
+            "kafka_host": "%s:%s" % (host, port),
+            "schema_registry": 'http://%s:%s' % (host, port+1),
             "reset_offset_on_start": True,
             "offset_type": "LATEST",
             "client_id": 'Test SUMO Connector',
@@ -44,14 +44,15 @@ class ProducerExample:
 
         # The current configuration expects the Time Service to start on 2018-09-26 09:00:00
         # The simulation starts at 2018-09-26 09:01:00 and ends at 2018-09-26 09:02:00
-        time.sleep(1)
+        time.sleep(5)
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "Configuration.json")
         test_bed_adapter.producer_managers["sumo_SumoConfiguration"].send_messages([json.load(open(message_path))])
 
         # The affected area is valid from 2018-09-26 09:01:10 until 2018-09-26 09:01:50
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "AffectedArea.json")
-        test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages([json.load(open(message_path))])
+#        test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages([json.load(open(message_path))])
 
+        time.sleep(5)
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "simulation_request_unittransport.json")
         test_bed_adapter.producer_managers["simulation_request_unittransport"].send_messages([json.load(open(message_path))])
 
@@ -69,12 +70,17 @@ class ProducerExample:
 
 
 if __name__ == '__main__':
-    host = "localhost" # other possible values: 'driver-testbed.eu', '129.247.218.121'
+    host = "localhost" # other possible values: 'tb6.driver-testbed.eu:3561', 'driver-testbed.eu', '129.247.218.121'
     scenario = "acosta" # the name of the scenario directory; the other existing example scenario: 'WorldForumTheHague' or the self-defined scenario
     if len(sys.argv) > 1:
-        host = sys.argv[1]
+        if ":" not in sys.argv[1]:
+            host = sys.argv[1]
+            port = 3501
+        else:
+            host, port = sys.argv[1].split(":")
     if len(sys.argv) > 2:
         scenario = sys.argv[2]
+    log = scenario + ".log"
     if len(sys.argv) > 3:
         log = sys.argv[3]
-    ProducerExample().main(host, scenario, log)
+    ProducerExample().main(host, int(port), scenario, log)

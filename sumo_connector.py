@@ -35,7 +35,7 @@ def get_options():
     argParser.add_argument("--nogui", action="store_true",
                          default=False, help="run the command-line version of sumo")
     argParser.add_argument("-s", "--server",
-                    default="localhost", help="define the server; other possible values: 'driver-testbed.eu', '129.247.218.121'")
+                    default="localhost", help="define the server; other possible values: 'tb6.driver-testbed.eu:3561', 'driver-testbed.eu', '129.247.218.121'")
     argParser.add_argument("-v", "--verbose", action="store_true", dest="verbose",
                      default=False, help="tell me what you are doing")
     options = argParser.parse_args()
@@ -57,6 +57,7 @@ class SumoConnector:
         self._affected = []
         self._runningVehicles = {}
         self._resetRestriction = {}
+        self._inserted = []
 
     def addToQueue(self, message):
         self._queue.put(message['decoded_value'][0])
@@ -83,9 +84,13 @@ class SumoConnector:
             print(e)
 
     def handleTime(self, time):
+        if self._net is None or time["state"] != "Started":
+            return
         trialTime = time["trialTime"]
         print(datetime.datetime.fromtimestamp(trialTime / 1000.))
-        while self._net is not None and trialTime > self._simTime and self._simTime < self._config["end"]:
+        if self._simTime < 0:
+            self._simTime = trialTime
+        while trialTime > self._simTime and (self._config["end"] < 0 or self._simTime < self._config["end"]):
             traci.simulationStep()
             self._simTime += self._deltaT
             self.checkAffected()
@@ -93,26 +98,40 @@ class SumoConnector:
             resultMap = traci.vehicle.getAllSubscriptionResults()
             for vid, valMap in resultMap.items():
                 self.sendItemData(vid, vid, valMap)
+            for vid, lon, lat in self._inserted:
+                if vid not in resultMap:
+                    data = {"guid" : vid,
+                            "name" : "%s %s" % (vid, valMap[tc.VAR_TYPE]),
+                            "owner": "sumo",
+                            "visibleForParticipant": True,
+                            "movable": True,
+                            "location": { "latitude": lat, "longitude": lon, "altitude": 0 },
+                            "orientation": { "yaw": 0, "pitch": 0, "roll": 0 },
+                            "velocity": { "yaw": 0, "pitch": 0, "magnitude": 0 }
+                    }
+                    self._test_bed_adapter.producer_managers["simulation_entity_item"].send_messages([data])
+                    self._inserted.remove((vid, lon, lat))
+                    break
 
     def handleAffectedArea(self, area):
         affectedTLSList = []
         affectedEdgeList = []
-        
+
         # currently only consider one polygon for each area
         shape = [self._net.convertLonLat2XY(*point) for point in area["area"]["coordinates"][0][0]]
         polygons = [sumolib.shapes.polygon.Polygon(area["id"], shape=shape)]
-        
+
         reader = edgesInDistricts.DistrictEdgeComputer(self._net)
         optParser = OptionParser()
         edgesInDistricts.fillOptions(optParser)
         edgeOptions, _ = optParser.parse_args([])
         reader.computeWithin(polygons, edgeOptions)
-        
+
         # get the affected edges
         result = list(reader._districtEdges.values())
         if result:
             affectedEdgeList = result[0]  # there is only one district
-        
+
         if area["trafficLightsBroken"]:
             affectedIntersections = set()
             for n in self._net.getNodes():
@@ -196,20 +215,26 @@ class SumoConnector:
                 self.sendItemData(self._runningVehicles[vid], vid, valMap)
 
     def handleRoutingRequest(self, routing):
-        guid = routing["guid"]
+        guid = routing["unit"]
         startEdge, startPos, startLane = s = traci.simulation.convertRoad(routing["route"][0]["longitude"], routing["route"][0]["latitude"], True)
         endEdge, endPos, endLane = e = traci.simulation.convertRoad(routing["route"][1]["longitude"], routing["route"][1]["latitude"], True)
         print("routing from", s, "to",  e)
         traci.route.add(guid, (startEdge, endEdge))
         traci.vehicle.add(guid, guid, "ignoring", departPos=str(startPos), arrivalPos=str(endPos))#, departLane=str(startLane), arrivalLane=str(endLane))
         traci.vehicle.subscribe(guid, [tc.VAR_TYPE, tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SLOPE, tc.VAR_SPEED])
+        self._inserted.append((guid, routing["route"][1]["longitude"], routing["route"][1]["latitude"]))
 
     def main(self):
+        if ":" not in self._options.server:
+            server = self._options.server
+            port = 3501
+        else:
+            server, port = self._options.server.split(":")
         testbed_options = {
             "auto_register_schemas": True,
             "schema_folder": 'data/schemas',
-            "kafka_host": self._options.server + ':3501',
-            "schema_registry": 'http://%s:3502' % self._options.server,
+            "kafka_host": "%s:%s" % (server, port),
+            "schema_registry": 'http://%s:%s' % (server, int(port) + 1),
             "reset_offset_on_start": True,
             "offset_type": "LATEST",
             "client_id": 'SUMO Connector',

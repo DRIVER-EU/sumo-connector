@@ -1,7 +1,7 @@
 {
     "configFile": "Rotterdam/data/osm.sumocfg",
-    "begin": 1537945260000,
-    "end": 1537945320000,
+    "begin": -1,
+    "end": -1,
     "aggregation": 3600000,
     "singleVehicle": -1,
     "affectedTraffic": 90000

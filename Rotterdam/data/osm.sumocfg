@@ -16,7 +16,9 @@
     </processing>
 
     <routing>
-        <device.rerouting.adaptation-steps value="180"/>
+        <device.rerouting.adaptation-steps value="1"/>
+        <device.rerouting.probability values="1.0"/>
+        <device.rerouting.adaptation-interval value="10"/>
     </routing>
 
     <report>

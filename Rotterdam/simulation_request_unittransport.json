@@ -1,7 +1,7 @@
 {
-    "guid": "vehicle1_route",
-    "owner": "anyone",
-    "unit": "vehicle1",
+    "guid": "87c42bb4-6da3-11e9-82fc-247703229c84",
+    "owner": "sumo-test",
+    "unit": "very_emergency",
     "destination": "somewhere",
     "route": [
       { "latitude": 51.9236, "longitude": 4.4802, "altitude": 0 },

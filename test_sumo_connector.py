@@ -6,6 +6,7 @@ import os
 import queue
 import threading
 import time
+from argparse import ArgumentParser
 sys.path += [os.path.join(os.path.dirname(__file__), "..", "python-test-bed-adapter")]
 from test_bed_adapter.options.test_bed_options import TestBedOptions
 from test_bed_adapter import TestBedAdapter
@@ -20,7 +21,7 @@ class ProducerExample:
     def addToQueue(self, message):
         self._queue.put(message['decoded_value'][0])
 
-    def main(self, host, port, scenario, log=None):
+    def main(self, host, port, scenario, log, ownerFilter):
         options = {
             "auto_register_schemas": True,
             "schema_folder": 'data/schemas',
@@ -49,7 +50,9 @@ class ProducerExample:
         test_bed_adapter.producer_managers["sumo_SumoConfiguration"].send_messages([json.load(open(message_path))])
 
         # The affected area is valid from 2018-09-26 09:01:10 until 2018-09-26 09:01:50
+        time.sleep(5)
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "AffectedArea.json")
+# TODO check why SUMO collapses if I activate this one
 #        test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages([json.load(open(message_path))])
 
         time.sleep(5)
@@ -63,24 +66,30 @@ class ProducerExample:
         logFile = open(log, "w") if log else None
         while True:
             message = self._queue.get()
-            logging.info("\n\n-----\nReceived message\n-----\n\n" + str(message))
-            if log and "updatedAt" not in message:
-                print(message, file=logFile)
-                logFile.flush()
+            if "owner" not in message or message["owner"] != ownerFilter:
+                logging.info("\n\n-----\nReceived message\n-----\n\n" + str(message))
+                if log and "updatedAt" not in message:
+                    print(message, file=logFile)
+                    logFile.flush()
 
 
 if __name__ == '__main__':
-    host = "localhost" # other possible values: 'tb6.driver-testbed.eu:3561', 'driver-testbed.eu', '129.247.218.121'
-    scenario = "acosta" # the name of the scenario directory; the other existing example scenario: 'WorldForumTheHague' or the self-defined scenario
-    if len(sys.argv) > 1:
-        if ":" not in sys.argv[1]:
-            host = sys.argv[1]
-            port = 3501
-        else:
-            host, port = sys.argv[1].split(":")
-    if len(sys.argv) > 2:
-        scenario = sys.argv[2]
-    log = scenario + ".log"
-    if len(sys.argv) > 3:
-        log = sys.argv[3]
-    ProducerExample().main(host, int(port), scenario, log)
+    argParser = ArgumentParser()
+    argParser.add_argument("scenario", help="the (directory) name of the scenario to run")
+    argParser.add_argument("--log", help="the file name of log output", metavar="FILE")
+    argParser.add_argument("-s", "--server", default="localhost",
+                           help="define the server; other possible values: 'tb6.driver-testbed.eu:3561', 'driver-testbed.eu', '129.247.218.121'")
+    argParser.add_argument("-v", "--verbose", action="store_true", default=False,
+                           help="tell me what you are doing")
+    argParser.add_argument("-f", "--filter", default="Thales.SE-Star", help="filter incoming messages for the given owner")
+    options = argParser.parse_args()
+
+    if options.log is None:
+        options.log = options.scenario + ".log"
+
+    if ":" not in options.server:
+        host = options.server
+        port = 3501
+    else:
+        host, port = options.server.split(":")
+    ProducerExample().main(host, int(port), options.scenario, options.log, options.filter)

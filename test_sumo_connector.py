@@ -49,8 +49,9 @@ class ProducerExample:
         test_bed_adapter.producer_managers["sumo_SumoConfiguration"].send_messages([json.load(open(message_path))])
 
         # The affected area is valid from 2018-09-26 09:01:10 until 2018-09-26 09:01:50
+        time.sleep(5)
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "AffectedArea.json")
-#        test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages([json.load(open(message_path))])
+        test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages([json.load(open(message_path))])
 
         time.sleep(5)
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "simulation_request_unittransport.json")
@@ -71,7 +72,7 @@ class ProducerExample:
 
 if __name__ == '__main__':
     host = "localhost" # other possible values: 'tb6.driver-testbed.eu:3561', 'driver-testbed.eu', '129.247.218.121'
-    scenario = "acosta" # the name of the scenario directory; the other existing example scenario: 'WorldForumTheHague' or the self-defined scenario
+    scenario = "Rotterdam" # the name of the scenario directory; the other existing example scenario: 'WorldForumTheHague' or the self-defined scenario
     if len(sys.argv) > 1:
         if ":" not in sys.argv[1]:
             host = sys.argv[1]

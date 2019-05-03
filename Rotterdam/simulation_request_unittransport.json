@@ -4,7 +4,7 @@
     "unit": "vehicle1",
     "destination": "somewhere",
     "route": [
-      { "latitude": 51.9236, "longitude": 4.4802, "altitude": 0 },
+      { "latitude": 51.922267, "longitude": 4.482827, "altitude": 0 },
       { "latitude": 51.9114, "longitude": 4.4682, "altitude": 0 }
     ]
 }

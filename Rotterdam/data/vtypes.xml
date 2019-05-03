@@ -2,4 +2,6 @@
 
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
     <vType id="ignoring" vClass="ignoring"/>
+    <vType id="emergency" vClass="emergency"/>
+    <vType id="passenger" vClass="passenger"/>
 </routes>

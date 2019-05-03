@@ -93,7 +93,7 @@ class SumoConnector:
         while trialTime > self._simTime and (self._config["end"] < 0 or self._simTime < self._config["end"]):
             traci.simulationStep()
             self._simTime += self._deltaT
-            self.checkAffected()
+            # self.checkAffected()
             self.writeSingleVehicleOutput(self._config["singleVehicle"])
             resultMap = traci.vehicle.getAllSubscriptionResults()
             for vid, valMap in resultMap.items():
@@ -129,6 +129,7 @@ class SumoConnector:
 
         # get the affected edges
         result = list(reader._districtEdges.values())
+        print("affected edges: ", result)
         if result:
             affectedEdgeList = result[0]  # there is only one district
 
@@ -148,10 +149,11 @@ class SumoConnector:
                                 affectedTLSList.append(tls.getID())
                                 break
         self._affected.append(AffectedArea(area["begin"], area["end"], polygons, affectedEdgeList, affectedTLSList, area["restriction"].split()))
+        self.checkAffected()
 
     def checkAffected(self):
         for affected in self._affected:
-            if self._simTime == affected.begin:
+            if self._simTime >= affected.begin:
                 # switch off the affected traffic lights
                 for tlsId in affected.tls:
                     traci.trafficlight.setProgram(tlsId, "off")
@@ -220,7 +222,7 @@ class SumoConnector:
         endEdge, endPos, endLane = e = traci.simulation.convertRoad(routing["route"][1]["longitude"], routing["route"][1]["latitude"], True)
         print("routing from", s, "to",  e)
         traci.route.add(guid, (startEdge, endEdge))
-        traci.vehicle.add(guid, guid, "ignoring", departPos=str(startPos), arrivalPos=str(endPos))#, departLane=str(startLane), arrivalLane=str(endLane))
+        traci.vehicle.add(guid, guid, "emergency", departPos=str(startPos), arrivalPos=str(endPos))#, departLane=str(startLane), arrivalLane=str(endLane))
         traci.vehicle.subscribe(guid, [tc.VAR_TYPE, tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SLOPE, tc.VAR_SPEED])
         self._inserted.append((guid, routing["route"][1]["longitude"], routing["route"][1]["latitude"]))
 
@@ -251,7 +253,7 @@ class SumoConnector:
             threads[-1].start()
         while True:
             message = self._queue.get()
-            logging.info("\n\n-----\nHandling message\n-----\n\n" + str(message))
+            logging.info("\nHandling message\n-----\n" + str(message))
             if "configFile" in message:
                 self.handleConfig(message)
             elif "trialTime" in message:

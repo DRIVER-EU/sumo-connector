@@ -1,5 +1,7 @@
 ## Running the demo
 
+For a video of the running demo check: [screencapture.zip](https://github.com/DRIVER-EU/sumo-connector/files/3166656/2019-05-10-14-34-01.zip)
+
 First download the docker local i4cm test-bed repository to a folder on your machine: [https://github.com/DRIVER-EU/test-bed/tree/master/docker/local-i4cm](https://github.com/DRIVER-EU/test-bed/tree/master/docker/local-i4cm).
 
 Start this test-bed variant by running 

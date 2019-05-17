@@ -59,6 +59,9 @@ class ProducerExample:
         message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "simulation_request_unittransport.json")
         test_bed_adapter.producer_managers["simulation_request_unittransport"].send_messages([json.load(open(message_path))])
 
+#        time.sleep(10)
+#        test_bed_adapter.producer_managers["simulation_request_unittransport"].send_messages([json.load(open(message_path))])
+
         threads = []
         for topic in options["consume"]:
             threads.append(threading.Thread(target=test_bed_adapter.consumer_managers[topic].listen_messages))

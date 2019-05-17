@@ -225,13 +225,19 @@ class SumoConnector:
         endEdge, endPos, endLane = e = traci.simulation.convertRoad(routing["route"][1]["longitude"], routing["route"][1]["latitude"], True)
         print("routing from", s, "to",  e)
         if vtype not in traci.vehicletype.getIDList():
-            # TODO give the emergency vehicle a better look
+            # TODO adapt the emergency vehicle look if it is a police / fire brigade
             traci.vehicletype.copy("emergency", vtype)
-        traci.route.add(guid, (startEdge, endEdge))
-        # TODO check whether a vehicle already exists
-        traci.vehicle.add(guid, guid, vtype, departPos=str(startPos), arrivalPos=str(endPos))#, departLane=str(startLane), arrivalLane=str(endLane))
-        traci.vehicle.subscribe(guid, [tc.VAR_TYPE, tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SLOPE, tc.VAR_SPEED])
-        self._inserted[guid] = [vtype, routing["route"][1]["longitude"], routing["route"][1]["latitude"], 0.]
+        routeID = "%s_%s" % (guid, self._simTime)
+        traci.route.add(routeID, (startEdge, endEdge))
+        if guid in self._inserted:
+            print("removing", guid)
+            traci.vehicle.remove(guid)
+        try:
+            traci.vehicle.add(guid, routeID, vtype, departPos=str(startPos), arrivalPos=str(endPos))#, departLane=str(startLane), arrivalLane=str(endLane))
+            traci.vehicle.subscribe(guid, [tc.VAR_TYPE, tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SLOPE, tc.VAR_SPEED])
+            self._inserted[guid] = [vtype, routing["route"][1]["longitude"], routing["route"][1]["latitude"], 0.]
+        except:
+            pass
 
     def main(self):
         if ":" not in self._options.server:

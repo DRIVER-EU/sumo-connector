@@ -10,16 +10,36 @@ from argparse import ArgumentParser
 sys.path += [os.path.join(os.path.dirname(__file__), "..", "python-test-bed-adapter")]
 from test_bed_adapter.options.test_bed_options import TestBedOptions
 from test_bed_adapter import TestBedAdapter
+import sumo_connector
 
 import logging
 logging.basicConfig(level=logging.INFO)
 
+
 class ProducerExample:
     def __init__(self):
         self._queue = queue.Queue()
+        self._test_bed_adapter = None
+        self._connector = None
 
     def addToQueue(self, message):
         self._queue.put(message['decoded_value'][0])
+
+    def sendTime(self):
+        t = 0
+        while self._connector is not None:
+            message = [{"state": "Started", "trialTime": t}]
+            self._connector.addToQueue({"decoded_value": message})
+            time.sleep(1)
+            t += 1000
+
+    def sendMessage(self, manager, msgFile):
+        message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), msgFile)
+        message = [json.load(open(message_path))]
+        if self._test_bed_adapter is not None:
+            self._test_bed_adapter.producer_managers[manager].send_messages(message)
+        else:
+            self._connector.addToQueue({"decoded_value": message})
 
     def main(self, host, port, scenario, log, ownerFilter):
         options = {
@@ -33,39 +53,40 @@ class ProducerExample:
             "consume": ["simulation_entity_item"],
             "produce": ["sumo_SumoConfiguration", "sumo_AffectedArea", "simulation_request_unittransport"]}
 
-        test_bed_options = TestBedOptions(options)
-        test_bed_adapter = TestBedAdapter(test_bed_options)
+        if host != "none":
+            self._test_bed_adapter = TestBedAdapter(TestBedOptions(options))
+            self._test_bed_adapter.on_message += self.addToQueue
+            # This function will act as a handler. It only prints the message once it has been sent
+            self._test_bed_adapter.on_sent += lambda message : logging.info("\n\n------\nmessage sent:\n------\n\n" + str(message))
+            self._test_bed_adapter.initialize()
+            time.sleep(5)
+        else:
+            self._connector = sumo_connector.SumoConnector(msgReceiver=self)
 
-        # This function will act as a handler. It only prints the message once it has been sent
-        message_sent_handler = lambda message : logging.info("\n\n------\nmessage sent:\n------\n\n" + str(message))
-        test_bed_adapter.on_message += self.addToQueue
-        test_bed_adapter.on_sent += message_sent_handler
+        # Start simulation
+        self.sendMessage("sumo_SumoConfiguration", os.path.join(scenario, "Configuration.json"))
 
-        test_bed_adapter.initialize()
-
-        # The current configuration expects the Time Service to start on 2018-09-26 09:00:00
-        # The simulation starts at 2018-09-26 09:01:00 and ends at 2018-09-26 09:02:00
-        time.sleep(5)
-        message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "Configuration.json")
-        test_bed_adapter.producer_managers["sumo_SumoConfiguration"].send_messages([json.load(open(message_path))])
-
-        # The affected area is valid from 2018-09-26 09:01:10 until 2018-09-26 09:01:50
-        time.sleep(5)
-        message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "AffectedArea.json")
+        # Send affected area
+#        time.sleep(5)
 # TODO check why SUMO collapses if I activate this one
-#        test_bed_adapter.producer_managers["sumo_AffectedArea"].send_messages([json.load(open(message_path))])
+        self.sendMessage("sumo_AffectedArea", os.path.join(scenario, "AffectedArea.json"))
 
+        # Send routing request
         time.sleep(5)
-        message_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), scenario, "simulation_request_unittransport.json")
-        test_bed_adapter.producer_managers["simulation_request_unittransport"].send_messages([json.load(open(message_path))])
+        self.sendMessage("simulation_request_unittransport", os.path.join(scenario, "simulation_request_unittransport.json"))
 
-#        time.sleep(10)
-#        test_bed_adapter.producer_managers["simulation_request_unittransport"].send_messages([json.load(open(message_path))])
+        # Try to send the same message again (still failing)
+        #time.sleep(5)
+        #self.sendMessage("simulation_request_unittransport", os.path.join(scenario, "simulation_request_unittransport.json"))
 
-        threads = []
-        for topic in options["consume"]:
-            threads.append(threading.Thread(target=test_bed_adapter.consumer_managers[topic].listen_messages))
-            threads[-1].start()
+        if host != "none":
+            threads = []
+            for topic in options["consume"]:
+                threads.append(threading.Thread(target=self._test_bed_adapter.consumer_managers[topic].listen_messages))
+                threads[-1].start()
+        else:
+            threading.Thread(target=self._connector.run).start()
+            threading.Thread(target=self.sendTime).start()
         logFile = open(log, "w") if log else None
         while True:
             message = self._queue.get()

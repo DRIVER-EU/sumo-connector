@@ -288,7 +288,7 @@ if __name__ == '__main__':
                            default=False, help="run the command-line version of sumo")
     argParser.add_argument("-s", "--server", default=os.environ.get("KAFKA_HOST", "localhost:3501"),
                            help="define the server; other possible values: 'tb6.driver-testbed.eu:3561', 'driver-testbed.eu', '129.247.218.121'")
-    argParser.add_argument("-r", "--schemaregistry", default=os.environ.get("SCHEMA_REGISTRY", "localhost:3502"),
+    argParser.add_argument("-r", "--schemaregistry", default=os.environ.get("SCHEMA_REGISTRY", "http://localhost:3502"),
                            help="define the schema-registry; other possible values: 'tb6.driver-testbed.eu:3562', 'driver-testbed.eu', '129.247.218.121'")
     argParser.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False,
                            help="tell me what you are doing")

@@ -44,7 +44,7 @@ class SumoConnector:
         self._resetRestriction = {}
         self._inserted = {}
         self._requestIdx = 0
-        print(options)
+        logging.info(options)
 
     def addToQueue(self, message):
         self._queue.put(message['decoded_value'][0])
@@ -62,25 +62,22 @@ class SumoConnector:
             sumoBinary = sumolib.checkBinary('sumo')
         else:
             sumoBinary = sumolib.checkBinary('sumo')
-        try:
-            traci.start([sumoBinary, "-S", "-Q",
-                                     "-c", config["configFile"],
-                                     "--fcd-output", self._options.fcdOutput if self._options else "/dev/null",
-                                     "--device.fcd.period", str(config["singleVehicle"])
-                                     ], numRetries=3)
-            self._deltaT = traci.simulation.getDeltaT() * 1000
-            for file in sumolib.xml.parse(config["configFile"], 'net-file'):
-                netfile = os.path.join(os.path.dirname(config["configFile"]), file.value)
-                print (netfile)
-            self._net = sumolib.net.readNet(netfile)
-        except traci.exceptions.FatalTraCIError as e:
-            print(e)
+        traci.start([sumoBinary, "-S", "-Q",
+                                    "-c", config["configFile"],
+                                    "--fcd-output", self._options.fcdOutput if self._options else "/dev/null",
+                                    "--device.fcd.period", str(config["singleVehicle"])
+                                    ], numRetries=3)
+        self._deltaT = traci.simulation.getDeltaT() * 1000
+        for file in sumolib.xml.parse(config["configFile"], 'net-file'):
+            netfile = os.path.join(os.path.dirname(config["configFile"]), file.value)
+            logging.info(netfile)
+        self._net = sumolib.net.readNet(netfile)
 
     def handleTime(self, time):
         if self._net is None or ("state" in time and time["state"] != "Started"):
             return
         trialTime = time["trialTime"]
-        print(datetime.datetime.fromtimestamp(trialTime / 1000.))
+        logging.info(datetime.datetime.fromtimestamp(trialTime / 1000.))
         if self._simTime < 0:
             self._simTime = trialTime
         # TODO adapt GUI delay if necessary
@@ -97,11 +94,9 @@ class SumoConnector:
                     self._inserted[vid][-1] = resultMap[vid][tc.VAR_ANGLE]
                 else:
                     vtype, lon, lat, angle = self._inserted[vid]
-                    data = {"guid" : vid,
+                    data = {"id" : vid,
                             "name" : vtype,
                             "owner": "sumo",
-                            "visibleForParticipant": True,
-                            "movable": True,
                             "location": { "latitude": lat, "longitude": lon, "altitude": 0 },
                             "orientation": { "yaw": angle, "pitch": 0, "roll": 0 },
                             "velocity": { "yaw": angle, "pitch": 0, "magnitude": 0 }
@@ -148,7 +143,7 @@ class SumoConnector:
 
     def checkAffected(self):
         for affected in self._affected:
-            print("checking", self._simTime, affected.begin)
+            logging.info("checking %s %s" % (self._simTime, affected.begin))
             if self._simTime == affected.begin:
                 # switch off the affected traffic lights
                 for tlsId in affected.tls:
@@ -187,11 +182,9 @@ class SumoConnector:
                         traci.lane.setDisallowed(lane.getID(), self._resetRestriction[lane.getID()])
 
     def sendItemData(self, guid, valMap):
-        data = {"guid" : guid,
+        data = {"id" : guid,
                 "name" : valMap[tc.VAR_TYPE],
-                "owner": "sumo",
-                "visibleForParticipant": True,
-                "movable": True}
+                "owner": "sumo"}
         x, y, alt = valMap[tc.VAR_POSITION3D]
         lon, lat = self._net.convertXY2LonLat(x, y)
         data["location"] = { "latitude": lat, "longitude": lon, "altitude": alt }
@@ -212,39 +205,39 @@ class SumoConnector:
             for vid, valMap in resultMap.items():
                 self.sendItemData(self._runningVehicles[vid], valMap)
 
-    def handleRoutingRequest(self, routing):
-        guid = routing["guid"]
+    def handleTransportRequest(self, routing):
+        guid = routing["id"]
         vtype = routing["unit"]
         startEdge, startPos, startLane = s = traci.simulation.convertRoad(routing["route"][0]["longitude"], routing["route"][0]["latitude"], True)
         endEdge, endPos, endLane = e = traci.simulation.convertRoad(routing["route"][1]["longitude"], routing["route"][1]["latitude"], True)
-        print("routing from", s, "to",  e)
+        logging.info("routing from", s, "to",  e)
         if vtype not in traci.vehicletype.getIDList():
             # TODO adapt the emergency vehicle look if it is a police / fire brigade
             traci.vehicletype.copy("emergency", vtype)
         routeID = "%s.%s" % (guid, self._requestIdx)
         self._requestIdx += 1
         if guid in self._inserted:
-            print("removing", guid)
+            logging.info("removing %s" % guid)
             traci.vehicle.remove(guid)
-        try:
-            traci.vehicle.add(guid, routeID, vtype, departPos=str(startPos), arrivalPos=str(endPos))#, departLane=str(startLane), arrivalLane=str(endLane))
-            traci.vehicle.subscribe(guid, [tc.VAR_TYPE, tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SLOPE, tc.VAR_SPEED])
-            self._inserted[guid] = [vtype, routing["route"][1]["longitude"], routing["route"][1]["latitude"], 0.]
-        except:
-            pass
+        traci.vehicle.add(guid, routeID, vtype, departPos=str(startPos), arrivalPos=str(endPos))#, departLane=str(startLane), arrivalLane=str(endLane))
+        traci.vehicle.subscribe(guid, [tc.VAR_TYPE, tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SLOPE, tc.VAR_SPEED])
+        self._inserted[guid] = [vtype, routing["route"][1]["longitude"], routing["route"][1]["latitude"], 0.]
 
     def run(self):
         while True:
-            message = self._queue.get()
-            logging.info("\n\n-----\nHandling message\n-----\n\n" + str(message))
-            if "configFile" in message:
-                self.handleConfig(message)
-            elif "trialTime" in message:
-                self.handleTime(message)
-            elif "restriction" in message:
-                self.handleAffectedArea(message)
-            elif "route" in message:
-                self.handleRoutingRequest(message)
+            try:
+                message = self._queue.get()
+                logging.info("\n\n-----\nHandling message\n-----\n\n" + str(message))
+                if "configFile" in message:
+                    self.handleConfig(message)
+                elif "trialTime" in message:
+                    self.handleTime(message)
+                elif "area" in message:
+                    self.handleAffectedArea(message)
+                elif "route" in message:
+                    self.handleTransportRequest(message)
+            except Exception as e:
+                logging.error(e)
 
     def main(self):
         if ":" not in self._options.server:
@@ -256,16 +249,16 @@ class SumoConnector:
             schemaregistry = self._options.schemaregistry + (int(port) + 1)
         else:
             schemaregistry = self._options.schemaregistry
-        print(schemaregistry)
+        logging.info(schemaregistry)
         testbed_options = {
-            "auto_register_schemas": True,
+            "auto_register_schemas": False,
             "schema_folder": 'data/schemas',
             "kafka_host": "%s:%s" % (server, port),
             "schema_registry": '%s' % (schemaregistry),
             "reset_offset_on_start": True,
             "offset_type": "LATEST",
             "client_id": 'SUMO Connector',
-            "consume": ["sumo_SumoConfiguration", "sumo_AffectedArea", "system_timing", "simulation_request_unittransport"],
+            "consume": ["simulation_sumo_configuration", "simulation_affected_area", "system_timing", "simulation_request_transport"],
             "produce": ["simulation_entity_item"]}
 
         self._test_bed_adapter = TestBedAdapter(TestBedOptions(testbed_options))

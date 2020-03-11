@@ -206,15 +206,17 @@ class SumoConnector:
                 self.sendItemData(self._runningVehicles[vid], valMap)
 
     def handleTransportRequest(self, routing):
+        logging.info("Traci version %s %s" % traci.getVersion())
         guid = routing["id"]
-        vtype = routing["unit"]
+        vtype = routing["tags"]["unit"]
         startEdge, startPos, startLane = s = traci.simulation.convertRoad(routing["route"][0]["longitude"], routing["route"][0]["latitude"], True)
         endEdge, endPos, endLane = e = traci.simulation.convertRoad(routing["route"][1]["longitude"], routing["route"][1]["latitude"], True)
-        logging.info("routing from", s, "to",  e)
+        logging.info("routing from %s to %s" % (s, e))
         if vtype not in traci.vehicletype.getIDList():
             # TODO adapt the emergency vehicle look if it is a police / fire brigade
             traci.vehicletype.copy("emergency", vtype)
         routeID = "%s.%s" % (guid, self._requestIdx)
+        traci.route.add(routeID, (startEdge, endEdge)) 
         self._requestIdx += 1
         if guid in self._inserted:
             logging.info("removing %s" % guid)

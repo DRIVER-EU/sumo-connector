@@ -4,7 +4,7 @@
 FROM dlrts/sumo:latest
 ENV SUMO_HOME=/usr/share/sumo
 RUN apt-get -y update
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install git python3-pip python3-matplotlib
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install git python3-pip python3-matplotlib python3-pyproj
 RUN mkdir -p /opt/application;
 WORKDIR /opt/application
 RUN git clone https://github.com/DRIVER-EU/avro-schemas; git clone https://github.com/DRIVER-EU/python-test-bed-adapter;

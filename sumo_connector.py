@@ -270,6 +270,7 @@ class SumoConnector:
         threads = []
         for topic in testbed_options["consume"]:
             threads.append(threading.Thread(target=self._test_bed_adapter.consumer_managers[topic].listen_messages))
+            threads[-1].daemon = True
             threads[-1].start()
         self.run()
 
